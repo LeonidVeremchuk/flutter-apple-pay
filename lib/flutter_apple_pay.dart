@@ -6,8 +6,8 @@ class FlutterApplePay {
   static const MethodChannel _channel =
       const MethodChannel('flutter_apple_pay');
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
+  static Future<String> makePayment(Map args) async {
+    final String version = await _channel.invokeMethod('');
     return version;
   }
 }
