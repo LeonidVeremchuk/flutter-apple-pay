@@ -1,14 +1,175 @@
 import Flutter
 import UIKit
+import Foundation
+import PassKit
 
-public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin {
-  public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "flutter_apple_pay", binaryMessenger: registrar.messenger())
-    let instance = SwiftFlutterApplePayPlugin()
-    registrar.addMethodCallDelegate(instance, channel: channel)
-  }
+typealias AuthorizationCompletion = (_ payment: PKPayment) -> Void
+typealias AuthorizationViewControllerDidFinish = (_ controller : PKPaymentAuthorizationViewController) -> Void
 
-  public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    result("iOS " + UIDevice.current.systemVersion)
-  }
+public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAuthorizationViewControllerDelegate {
+    var authorizationCompletion : AuthorizationCompletion!
+    var authorizationViewControllerDidFinish : AuthorizationViewControllerDidFinish!
+    var pkrequest = PKPaymentRequest()
+    var flutterResult: FlutterResult!;
+    
+    
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let channel = FlutterMethodChannel(name: "flutter_apple_pay", binaryMessenger: registrar.messenger())
+        registrar.addMethodCallDelegate(SwiftFlutterApplePayPlugin(), channel: channel)
+    }
+    
+    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        flutterResult = result;
+        
+        let parameters = NSMutableDictionary()
+
+        parameters["paymentNetworks"] = [PKPaymentNetwork.amex,PKPaymentNetwork.masterCard,PKPaymentNetwork.visa]
+        parameters["requiredShippingContactFields"] = [PKContactField.name, PKContactField.postalAddress] as Set
+        parameters["merchantCapabilities"] = PKMerchantCapability.capability3DS // optional
+        
+        parameters["merchantIdentifier"] = "merchant.stripeApplePayTest"
+        parameters["countryCode"] = "UA"
+        parameters["currencyCode"] = "UAH"
+        
+        let item1 = ["label":"item1","amount":NSDecimalNumber(decimal: 10.0),"type":PKPaymentSummaryItemType.final] as [String : Any]
+
+        parameters["paymentSummaryItems"] = makePaymentSummaryItems(itemsParameters: [item1])
+        
+        makePaymentRequest(parameters: parameters,  authCompletion: authorizationCompletion, authControllerCompletion: authorizationViewControllerDidFinish)
+    }
+    
+    func authorizationCompletion(_ payment: PKPayment) {
+        
+    }
+    
+    func authorizationViewControllerDidFinish(_ controller : PKPaymentAuthorizationViewController) {
+        
+    }
+    
+    class func makePaymentSummaryItems(itemsParameters: Array<Dictionary <String, Any>>) -> [PKPaymentSummaryItem]? {
+        var items = [PKPaymentSummaryItem]()
+        var totalPrice:Decimal = 0.0
+        
+        for dictionary in itemsParameters {
+            
+            guard let label = dictionary["label"] as? String else {return nil}
+            guard let amount = dictionary["amount"] as? NSDecimalNumber else {return nil}
+            guard let type = dictionary["type"] as? PKPaymentSummaryItemType else {return nil}
+            
+            totalPrice += amount.decimalValue
+            
+            items.append(PKPaymentSummaryItem(label: label, amount: amount, type: type))
+        }
+        
+        let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(decimal:totalPrice), type: .final)
+        items.append(total)
+        
+        return items
+    }
+    
+    
+    func makePaymentRequest(parameters: NSDictionary, authCompletion: @escaping AuthorizationCompletion, authControllerCompletion: @escaping AuthorizationViewControllerDidFinish) {
+        guard let paymentNetworks               = parameters["paymentNetworks"]                 as? [PKPaymentNetwork] else {return}
+        guard let requiredShippingContactFields = parameters["requiredShippingContactFields"]   as? Set<PKContactField> else {return}
+        let merchantCapabilities : PKMerchantCapability = parameters["merchantCapabilities"]    as? PKMerchantCapability ?? .capability3DS
+        
+        guard let merchantIdentifier            = parameters["merchantIdentifier"]              as? String else {return}
+        guard let countryCode                   = parameters["countryCode"]                     as? String else {return}
+        guard let currencyCode                  = parameters["currencyCode"]                    as? String else {return}
+        
+        guard let paymentSummaryItems           = parameters["paymentSummaryItems"]             as? [PKPaymentSummaryItem] else {return}
+        
+        authorizationCompletion = authCompletion
+        authorizationViewControllerDidFinish = authControllerCompletion
+        
+        // Cards that should be accepted
+        if PKPaymentAuthorizationViewController.canMakePayments(usingNetworks: paymentNetworks) {
+            
+            pkrequest.merchantIdentifier = merchantIdentifier
+            pkrequest.countryCode = countryCode
+            pkrequest.currencyCode = currencyCode
+            pkrequest.supportedNetworks = paymentNetworks
+            pkrequest.requiredShippingContactFields = requiredShippingContactFields
+            // This is based on using Stripe
+            pkrequest.merchantCapabilities = merchantCapabilities
+            
+            pkrequest.paymentSummaryItems = paymentSummaryItems
+            
+            let authorizationViewController = PKPaymentAuthorizationViewController(paymentRequest: pkrequest)
+            
+            if let viewController = authorizationViewController {
+                viewController.delegate = self
+                guard let currentViewController = UIApplication.shared.keyWindow?.topMostViewController() else {
+                    return
+                }
+                currentViewController.present(viewController, animated: true)
+            }
+        }
+        return
+    }
+    
+    func paymentAuthorizationViewController(_ controller: PKPaymentAuthorizationViewController, didAuthorizePayment payment: PKPayment, handler completion: @escaping (PKPaymentAuthorizationResult) -> Void) {
+        authorizationCompletion(payment)
+        completion(PKPaymentAuthorizationResult(status: .success, errors: nil))
+    }
+    
+    
+    public func paymentAuthorizationViewControllerDidFinish(_ controller: PKPaymentAuthorizationViewController) {
+        // Dismiss the Apple Pay UI
+        guard let currentViewController = UIApplication.shared.keyWindow?.topMostViewController() else {
+            return
+        }
+        currentViewController.dismiss(animated: true, completion: nil)
+        authorizationViewControllerDidFinish(controller)
+    }
+    
+    func makePaymentSummaryItems(itemsParameters: Array<Dictionary <String, Any>>) -> [PKPaymentSummaryItem]? {
+        var items = [PKPaymentSummaryItem]()
+        var totalPrice:Decimal = 0.0
+        
+        for dictionary in itemsParameters {
+            
+            guard let label = dictionary["label"] as? String else {return nil}
+            guard let amount = dictionary["amount"] as? NSDecimalNumber else {return nil}
+            guard let type = dictionary["type"] as? PKPaymentSummaryItemType else {return nil}
+            
+            totalPrice += amount.decimalValue
+            
+            items.append(PKPaymentSummaryItem(label: label, amount: amount, type: type))
+        }
+        
+        let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(decimal:totalPrice), type: .final)
+        items.append(total)
+        
+        return items
+    }
+    
+}
+
+extension UIWindow {
+    func topMostViewController() -> UIViewController? {
+        guard let rootViewController = self.rootViewController else {
+            return nil
+        }
+        return topViewController(for: rootViewController)
+    }
+    
+    func topViewController(for rootViewController: UIViewController?) -> UIViewController? {
+        guard let rootViewController = rootViewController else {
+            return nil
+        }
+        guard let presentedViewController = rootViewController.presentedViewController else {
+            return rootViewController
+        }
+        switch presentedViewController {
+        case is UINavigationController:
+            let navigationController = presentedViewController as! UINavigationController
+            return topViewController(for: navigationController.viewControllers.last)
+        case is UITabBarController:
+            let tabBarController = presentedViewController as! UITabBarController
+            return topViewController(for: tabBarController.selectedViewController)
+        default:
+            return topViewController(for: presentedViewController)
+        }
+    }
 }
