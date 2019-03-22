@@ -15,13 +15,21 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    makePayment();
   }
 
   Future<void> makePayment() async {
-    String platformVersion;
+    dynamic platformVersion;
+    PaymentItem paymentItems = PaymentItem(label: 'Label', amount: 51.0);
+
     try {
-      platformVersion = await FlutterApplePay.makePayment(new Map());
+      platformVersion = await FlutterApplePay.makePayment(
+        countryCode: "UA",
+        currencyCode: "USD",
+        paymentNetworks: ['visa'],
+        merchantIdentifier: "merchant.stripeApplePayTest",
+        paymentItems: [paymentItems],
+      );
+      print(platformVersion);
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }
@@ -35,7 +43,17 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Apple Pay Test'),
         ),
         body: Center(
-          child: Text('Waiting for Apple Pay modal.'),
+          child:
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+                Text('Waiting for Apple Pay modal.'),
+                RaisedButton(
+                  child: Text('Call payment'),
+                  onPressed: () => makePayment(),
+                )
+            ],
+          )
         ),
       ),
     );
