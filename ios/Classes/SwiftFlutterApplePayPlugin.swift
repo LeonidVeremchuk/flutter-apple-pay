@@ -46,12 +46,14 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
         let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(floatLiteral:totalPrice), type: .final)
         items.append(total)
         
-        if paymentNeworks.contains("visa") {
-          payments.append(PKPaymentNetwork.visa)
-        }
-        
-        if paymentNeworks.contains("mastercard") {
-          payments.append(PKPaymentNetwork.masterCard)
+        paymentNeworks.forEach {
+            
+            guard let paymentType = PaymentSystem(rawValue: $0) else {
+                assertionFailure("No payment type found")
+                return
+            }
+            
+            payments.append(paymentType.paymentNetwork)
         }
         
         parameters["paymentNetworks"] = payments
@@ -82,6 +84,31 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
     func authorizationViewControllerDidFinish(_ controller : PKPaymentAuthorizationViewController) {
         //error
         flutterResult("some type or error")
+    }
+    
+    enum PaymentSystem: String {
+        case visa
+        case mastercard
+        case amex
+        case quicPay
+        case chinaUnionPay
+        case discover
+        case interac
+        case privateLabel
+        
+        var paymentNetwork: PKPaymentNetwork {
+            
+            switch self {
+                case .mastercard: return PKPaymentNetwork.masterCard
+                case .visa: return PKPaymentNetwork.visa
+                case .amex: return PKPaymentNetwork.amex
+                case .quicPay: return PKPaymentNetwork.quicPay
+                case .chinaUnionPay: return PKPaymentNetwork.chinaUnionPay
+                case .discover: return PKPaymentNetwork.discover
+                case .interac: return PKPaymentNetwork.interac
+                case .privateLabel: return PKPaymentNetwork.privateLabel
+            }
+        }
     }
     
 //    class func makePaymentSummaryItems(itemsParameters: Array<Dictionary <String, Any>>) -> [PKPaymentSummaryItem]? {

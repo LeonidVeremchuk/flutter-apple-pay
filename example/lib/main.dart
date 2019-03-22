@@ -25,7 +25,7 @@ class _MyAppState extends State<MyApp> {
       platformVersion = await FlutterApplePay.makePayment(
         countryCode: "UA",
         currencyCode: "USD",
-        paymentNetworks: ['visa'],
+        paymentNetworks: ['visa', 'mastercard'],
         merchantIdentifier: "merchant.stripeApplePayTest",
         paymentItems: [paymentItems],
       );
