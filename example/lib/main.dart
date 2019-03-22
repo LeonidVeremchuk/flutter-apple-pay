@@ -20,12 +20,11 @@ class _MyAppState extends State<MyApp> {
   Future<void> makePayment() async {
     dynamic platformVersion;
     PaymentItem paymentItems = PaymentItem(label: 'Label', amount: 51.0);
-
     try {
       platformVersion = await FlutterApplePay.makePayment(
         countryCode: "UA",
         currencyCode: "USD",
-        paymentNetworks: ['visa', 'mastercard'],
+        paymentNetworks: [PaymentNetwork.visa, PaymentNetwork.mastercard],
         merchantIdentifier: "merchant.stripeApplePayTest",
         paymentItems: [paymentItems],
       );

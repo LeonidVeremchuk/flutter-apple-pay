@@ -11,7 +11,7 @@ class FlutterApplePay {
   static Future<dynamic> makePayment({
     @required String countryCode,
     @required String currencyCode,
-    @required List<String> paymentNetworks,
+    @required List<PaymentNetwork> paymentNetworks,
     @required String merchantIdentifier,
     @required List<PaymentItem> paymentItems,
   }) async {
@@ -22,12 +22,13 @@ class FlutterApplePay {
     assert(paymentItems != null);
 
     final Map<String, Object> args = <String, dynamic>{
-      'paymentNetworks': paymentNetworks,
+      'paymentNetworks':
+          paymentNetworks.map((item) => item.toString().split('.')[1]).toList(),
       'countryCode': countryCode,
       'currencyCode': currencyCode,
-      'paymentItems': paymentItems.map((PaymentItem item) => item._toMap()).toList(),
+      'paymentItems':
+          paymentItems.map((PaymentItem item) => item._toMap()).toList(),
       'merchantIdentifier': merchantIdentifier
-//    'merchantIdentifier': "merchant.stripeApplePayTest"
     };
     if (Platform.isIOS) {
       final dynamic version = await _channel.invokeMethod('', args);
@@ -53,4 +54,15 @@ class PaymentItem {
     map["amount"] = this.amount;
     return map;
   }
+}
+
+enum PaymentNetwork {
+  visa,
+  mastercard,
+  amex,
+  quicPay,
+  chinaUnionPay,
+  discover,
+  interac,
+  privateLabel
 }
