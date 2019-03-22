@@ -22,7 +22,7 @@ class _MyAppState extends State<MyApp> {
     PaymentItem paymentItems = PaymentItem(label: 'Label', amount: 51.0);
     try {
       platformVersion = await FlutterApplePay.makePayment(
-        countryCode: "UA",
+        countryCode: "US",
         currencyCode: "USD",
         paymentNetworks: [PaymentNetwork.visa, PaymentNetwork.mastercard],
         merchantIdentifier: "merchant.stripeApplePayTest",
