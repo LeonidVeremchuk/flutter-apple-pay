@@ -111,28 +111,6 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
         }
     }
     
-//    class func makePaymentSummaryItems(itemsParameters: Array<Dictionary <String, Any>>) -> [PKPaymentSummaryItem]? {
-//        var items = [PKPaymentSummaryItem]()
-//        var totalPrice:Decimal = 0.0
-//
-//        for dictionary in itemsParameters {
-//
-//            guard let label = dictionary["label"] as? String else {return nil}
-//            guard let amount = dictionary["amount"] as? NSDecimalNumber else {return nil}
-//            guard let type = dictionary["type"] as? PKPaymentSummaryItemType else {return nil}
-//
-//            totalPrice += amount.decimalValue
-//
-//            items.append(PKPaymentSummaryItem(label: label, amount: amount, type: type))
-//        }
-//
-//        let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(decimal:totalPrice), type: .final)
-//        items.append(total)
-//
-//        return items
-//    }
-    
-    
     func makePaymentRequest(parameters: NSDictionary, authCompletion: @escaping AuthorizationCompletion, authControllerCompletion: @escaping AuthorizationViewControllerDidFinish) {
         guard let paymentNetworks               = parameters["paymentNetworks"]                 as? [PKPaymentNetwork] else {return}
         guard let requiredShippingContactFields = parameters["requiredShippingContactFields"]   as? Set<PKContactField> else {return}
