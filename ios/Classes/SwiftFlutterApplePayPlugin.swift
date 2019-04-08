@@ -5,7 +5,7 @@ import PassKit
 import Stripe
 
 typealias AuthorizationCompletion = (_ payment: String) -> Void
-typealias AuthorizationViewControllerDidFinish = (_ controller : PKPaymentAuthorizationViewController) -> Void
+typealias AuthorizationViewControllerDidFinish = (_ error : NSDictionary) -> Void
 
 public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAuthorizationViewControllerDelegate {
     var authorizationCompletion : AuthorizationCompletion!
@@ -85,9 +85,9 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
         flutterResult(payment)
     }
     
-    func authorizationViewControllerDidFinish(_ controller : PKPaymentAuthorizationViewController) {
+    func authorizationViewControllerDidFinish(_ error : NSDictionary) {
         //error
-        flutterResult("some type or error")
+        flutterResult(error)
     }
     
     enum PaymentSystem: String {
@@ -151,7 +151,11 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
                 }
                 currentViewController.present(viewController, animated: true)
             }
-        }
+        } else {
+            let error: NSDictionary = ["message": "User not added some cards", "code": "404"]
+            authControllerCompletion(error)
+         }
+
         return
     }
     
@@ -177,7 +181,8 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
             return
         }
         currentViewController.dismiss(animated: true, completion: nil)
-        authorizationViewControllerDidFinish(controller)
+        let error: NSDictionary = ["message": "User closed apple pay", "code": "400"]
+        authorizationViewControllerDidFinish(error)
     }
     
     func makePaymentSummaryItems(itemsParameters: Array<Dictionary <String, Any>>) -> [PKPaymentSummaryItem]? {
