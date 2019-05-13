@@ -1,6 +1,6 @@
 
 ## Example
-
+```
  Future<void> makePayment() async {
     dynamic platformVersion;
     PaymentItem paymentItems = PaymentItem(label: 'Label', amount: 51.0);
@@ -17,3 +17,4 @@
       platformVersion = 'Failed to get platform version.';
     }
   }
+```
