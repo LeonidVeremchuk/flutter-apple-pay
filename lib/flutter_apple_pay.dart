@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:meta/meta.dart';
 
 class FlutterApplePay {
   static const MethodChannel _channel =
@@ -31,8 +31,8 @@ class FlutterApplePay {
       'merchantIdentifier': merchantIdentifier
     };
     if (Platform.isIOS) {
-      final dynamic version = await _channel.invokeMethod('', args);
-      return version;
+      final dynamic data = await _channel.invokeMethod('', args);
+      return data;
     } else {
       throw Exception("Not supported operation system");
     }

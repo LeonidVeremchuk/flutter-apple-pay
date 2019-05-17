@@ -1,16 +1,24 @@
 # flutter_apple_pay_example
 
-Demonstrates how to use the flutter_apple_pay plugin.
+```dart
+    import 'package:flutter_apple_pay/flutter_apple_pay.dart';
+  
+  
+    Future<void> makePayment() async {
+       dynamic platformVersion;
+       PaymentItem paymentItems = PaymentItem(label: 'Label', amount: 51.0);
+       try {
+         platformVersion = await FlutterApplePay.makePayment(
+           countryCode: "US",
+           currencyCode: "USD",
+           paymentNetworks: [PaymentNetwork.visa, PaymentNetwork.mastercard],
+           merchantIdentifier: "merchant.stripeApplePayTest",
+           paymentItems: [paymentItems],
+         );
+         print(platformVersion);
+       } on PlatformException {
+         platformVersion = 'Failed to get platform version.';
+       }
+     }
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.io/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.io/docs/cookbook)
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.io/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+```

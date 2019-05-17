@@ -1,7 +1,9 @@
 name: flutter_apple_pay
-description: Flutter Apple Pay
-version: 0.0.1
-author: Leonid Veremchuk<leonid.veremchuk@gmail.com>
+description: Porting of Apple Pay (a mobile payment and digital wallet service by Apple Inc) to Flutter.
+version: 0.1.2+3
+authors:
+- Leonid Veremchuk <leonid.veremchuk@gmail.com>
+- Yehor Pavliukov <backspaceegor@gmail.com>
 homepage: https://github.com/Snailapp
 
 environment:
