@@ -14,17 +14,20 @@ class FlutterApplePay {
     @required List<PaymentNetwork> paymentNetworks,
     @required String merchantIdentifier,
     @required List<PaymentItem> paymentItems,
+    @required String stripePublishedKey,
   }) async {
     assert(countryCode != null);
     assert(currencyCode != null);
     assert(paymentItems != null);
     assert(merchantIdentifier != null);
     assert(paymentItems != null);
+    assert(stripePublishedKey != null);
 
     final Map<String, Object> args = <String, dynamic>{
       'paymentNetworks':
           paymentNetworks.map((item) => item.toString().split('.')[1]).toList(),
       'countryCode': countryCode,
+      'stripePublishedKey': stripePublishedKey,
       'currencyCode': currencyCode,
       'paymentItems':
           paymentItems.map((PaymentItem item) => item._toMap()).toList(),
