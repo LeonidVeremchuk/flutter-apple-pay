@@ -1,13 +1,20 @@
-# flutter_apple_pay
 
-Flutter Apple Pay integration (under development)!
-
-## Getting Started
-
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.io/developing-packages/),
-a specialized package that includes platform-specific implementation code for iOS.
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.io/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+## Example
+```
+ Future<void> makePayment() async {
+    dynamic platformVersion;
+    PaymentItem paymentItems = PaymentItem(label: 'Label', amount: 51.0);
+    try {
+      platformVersion = await FlutterApplePay.makePayment(
+        countryCode: "US",
+        currencyCode: "USD",
+        paymentNetworks: [PaymentNetwork.visa, PaymentNetwork.mastercard],
+        merchantIdentifier: "merchant.stripeApplePayTest",
+        paymentItems: [paymentItems],
+      );
+      print(platformVersion);
+    } on PlatformException {
+      platformVersion = 'Failed to get platform version.';
+    }
+  }
+```
