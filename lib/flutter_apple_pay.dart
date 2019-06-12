@@ -8,7 +8,7 @@ class FlutterApplePay {
   static const MethodChannel _channel =
       const MethodChannel('flutter_apple_pay');
 
-  static Future<dynamic> makePayment({
+  static Future<dynamic> getStripeToken({
     @required String countryCode,
     @required String currencyCode,
     @required List<PaymentNetwork> paymentNetworks,
@@ -34,8 +34,21 @@ class FlutterApplePay {
       'merchantIdentifier': merchantIdentifier
     };
     if (Platform.isIOS) {
-      final dynamic version = await _channel.invokeMethod('', args);
-      return version;
+      final dynamic stripeToken = await _channel.invokeMethod('getStripeToken', args);
+      return stripeToken;
+    } else {
+      throw Exception("Not supported operation system");
+    }
+  }
+
+  static Future<void> closeApplePaySheet({@required bool isSuccess}) async {
+    if (Platform.isIOS) {
+      if(isSuccess) {
+        await _channel.invokeMethod('closeApplePaySheetWithSuccess');
+      }
+      else {
+        await _channel.invokeMethod('closeApplePaySheetWithError');
+      }
     } else {
       throw Exception("Not supported operation system");
     }

@@ -6,12 +6,14 @@ import Stripe
 
 typealias AuthorizationCompletion = (_ payment: String) -> Void
 typealias AuthorizationViewControllerDidFinish = (_ error : NSDictionary) -> Void
+typealias CompletionHandler = (PKPaymentAuthorizationResult) -> Void
 
 public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAuthorizationViewControllerDelegate {
     var authorizationCompletion : AuthorizationCompletion!
     var authorizationViewControllerDidFinish : AuthorizationViewControllerDidFinish!
     var pkrequest = PKPaymentRequest()
     var flutterResult: FlutterResult!;
+    var completionHandler: CompletionHandler!
     
     
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -20,57 +22,67 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        flutterResult = result;
-        let parameters = NSMutableDictionary()
-        var payments: [PKPaymentNetwork] = []
-        var items = [PKPaymentSummaryItem]()
-        var totalPrice:Double = 0.0
-        let arguments = call.arguments as! NSDictionary
-        
-        guard let paymentNeworks = arguments["paymentNetworks"] as? [String] else {return}
-        guard let countryCode = arguments["countryCode"] as? String else {return}
-        guard let currencyCode = arguments["currencyCode"] as? String else {return}
+        if call.method == "getStripeToken" {
+            flutterResult = result;
+            let parameters = NSMutableDictionary()
+            var payments: [PKPaymentNetwork] = []
+            var items = [PKPaymentSummaryItem]()
+            var totalPrice:Double = 0.0
+            let arguments = call.arguments as! NSDictionary
+            
+            guard let paymentNeworks = arguments["paymentNetworks"] as? [String] else {return}
+            guard let countryCode = arguments["countryCode"] as? String else {return}
+            guard let currencyCode = arguments["currencyCode"] as? String else {return}
 
-        guard let stripePublishedKey = arguments["stripePublishedKey"] as? String else {return}
-        guard let paymentItems = arguments["paymentItems"] as? [NSDictionary] else {return}
-        guard let merchantIdentifier = arguments["merchantIdentifier"] as? String else {return}
-        
-        for dictionary in paymentItems {
-            guard let label = dictionary["label"] as? String else {return}
-            guard let price = dictionary["amount"] as? Double else {return}
-            let type = PKPaymentSummaryItemType.final
+            guard let stripePublishedKey = arguments["stripePublishedKey"] as? String else {return}
+            guard let paymentItems = arguments["paymentItems"] as? [NSDictionary] else {return}
+            guard let merchantIdentifier = arguments["merchantIdentifier"] as? String else {return}
             
-            totalPrice += price
-            
-            items.append(PKPaymentSummaryItem(label: label, amount: NSDecimalNumber(floatLiteral: price), type: type))
-        }
-        
-        Stripe.setDefaultPublishableKey(stripePublishedKey)
-        
-        let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(floatLiteral:totalPrice), type: .final)
-        items.append(total)
-        
-        paymentNeworks.forEach {
-            
-            guard let paymentType = PaymentSystem(rawValue: $0) else {
-                assertionFailure("No payment type found")
-                return
+            for dictionary in paymentItems {
+                guard let label = dictionary["label"] as? String else {return}
+                guard let price = dictionary["amount"] as? Double else {return}
+                let type = PKPaymentSummaryItemType.final
+                
+                totalPrice += price
+                
+                items.append(PKPaymentSummaryItem(label: label, amount: NSDecimalNumber(floatLiteral: price), type: type))
             }
             
-            payments.append(paymentType.paymentNetwork)
+            Stripe.setDefaultPublishableKey(stripePublishedKey)
+            
+            let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(floatLiteral:totalPrice), type: .final)
+            items.append(total)
+            
+            paymentNeworks.forEach {
+                
+                guard let paymentType = PaymentSystem(rawValue: $0) else {
+                    assertionFailure("No payment type found")
+                    return
+                }
+                
+                payments.append(paymentType.paymentNetwork)
+            }
+            
+            parameters["paymentNetworks"] = payments
+            parameters["requiredShippingContactFields"] = [PKContactField.name, PKContactField.postalAddress] as Set
+            parameters["merchantCapabilities"] = PKMerchantCapability.capability3DS // optional
+            
+            parameters["merchantIdentifier"] = merchantIdentifier
+            parameters["countryCode"] = countryCode
+            parameters["currencyCode"] = currencyCode
+            
+            parameters["paymentSummaryItems"] = items
+            
+            makePaymentRequest(parameters: parameters,  authCompletion: authorizationCompletion, authControllerCompletion: authorizationViewControllerDidFinish)
         }
-        
-        parameters["paymentNetworks"] = payments
-        parameters["requiredShippingContactFields"] = [PKContactField.name, PKContactField.postalAddress] as Set
-        parameters["merchantCapabilities"] = PKMerchantCapability.capability3DS // optional
-        
-        parameters["merchantIdentifier"] = merchantIdentifier
-        parameters["countryCode"] = countryCode
-        parameters["currencyCode"] = currencyCode
-        
-        parameters["paymentSummaryItems"] = items
-        
-        makePaymentRequest(parameters: parameters,  authCompletion: authorizationCompletion, authControllerCompletion: authorizationViewControllerDidFinish)
+        else if call.method == "closeApplePaySheetWithSuccess" {
+            closeApplePaySheetWithSuccess()
+        }
+        else if call.method == "closeApplePaySheetWithError" {
+            closeApplePaySheetWithError()
+        }  else {
+            result("Flutter method not implemented on iOS")
+        }
     }
     
     func authorizationCompletion(_ payment: String) {
@@ -169,11 +181,22 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
             }
             
             self.authorizationCompletion(stripeToken.stripeID)
-            completion(PKPaymentAuthorizationResult(status: .success, errors: nil))
+            self.completionHandler = completion
         }
 
     }
-    
+
+    public func closeApplePaySheetWithSuccess() {
+        if (self.completionHandler != nil) {
+            self.completionHandler(PKPaymentAuthorizationResult(status: .success, errors: nil))
+        }
+    }
+
+    public func closeApplePaySheetWithError() {
+        if (self.completionHandler != nil) {
+            self.completionHandler(PKPaymentAuthorizationResult(status: .failure, errors: nil))
+        }
+    }
     
     public func paymentAuthorizationViewControllerDidFinish(_ controller: PKPaymentAuthorizationViewController) {
         // Dismiss the Apple Pay UI
