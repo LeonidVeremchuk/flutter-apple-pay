@@ -50,7 +50,7 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
             
             Stripe.setDefaultPublishableKey(stripePublishedKey)
             
-            let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(floatLiteral:totalPrice), type: .pending)
+            let total = PKPaymentSummaryItem(label: "Dorm Mom", amount: NSDecimalNumber(floatLiteral:totalPrice), type: .pending)
             items.append(total)
             
             paymentNeworks.forEach {
