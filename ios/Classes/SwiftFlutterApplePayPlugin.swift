@@ -41,7 +41,7 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
             for dictionary in paymentItems {
                 guard let label = dictionary["label"] as? String else {return}
                 guard let price = dictionary["amount"] as? Double else {return}
-                let type = PKPaymentSummaryItemType.pending
+                let type = PKPaymentSummaryItemType.final
                 
                 totalPrice += price
                 
@@ -50,7 +50,7 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
             
             Stripe.setDefaultPublishableKey(stripePublishedKey)
             
-            let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(floatLiteral:totalPrice), type: .pending)
+            let total = PKPaymentSummaryItem(label: "Total", amount: NSDecimalNumber(floatLiteral:totalPrice), type: .final)
             items.append(total)
             
             paymentNeworks.forEach {
