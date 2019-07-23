@@ -39,12 +39,13 @@ public class SwiftFlutterApplePayPlugin: NSObject, FlutterPlugin, PKPaymentAutho
             guard let merchantIdentifier = arguments["merchantIdentifier"] as? String else {return}
             guard let merchantName = arguments["merchantName"] as? String else {return}
             guard let isPending = arguments["isPending"] as? Bool else {return}
-
+            
+            let type = isPending ? PKPaymentSummaryItemType.pending : PKPaymentSummaryItemType.final;
+            
             for dictionary in paymentItems {
                 guard let label = dictionary["label"] as? String else {return}
                 guard let price = dictionary["amount"] as? Double else {return}
-                let type = isPending ? PKPaymentSummaryItemType.pending : PKPaymentSummaryItemType.final;
-                
+
                 totalPrice += price
                 
                 items.append(PKPaymentSummaryItem(label: label, amount: NSDecimalNumber(floatLiteral: price), type: type))
