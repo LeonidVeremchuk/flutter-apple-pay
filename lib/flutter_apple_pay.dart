@@ -13,6 +13,8 @@ class FlutterApplePay {
     @required String currencyCode,
     @required List<PaymentNetwork> paymentNetworks,
     @required String merchantIdentifier,
+    @required String merchantName,
+    bool isPending = false,
     @required List<PaymentItem> paymentItems,
     @required String stripePublishedKey,
   }) async {
@@ -20,6 +22,7 @@ class FlutterApplePay {
     assert(currencyCode != null);
     assert(paymentItems != null);
     assert(merchantIdentifier != null);
+    assert(merchantName != null);
     assert(paymentItems != null);
     assert(stripePublishedKey != null);
 
@@ -31,7 +34,9 @@ class FlutterApplePay {
       'currencyCode': currencyCode,
       'paymentItems':
           paymentItems.map((PaymentItem item) => item._toMap()).toList(),
-      'merchantIdentifier': merchantIdentifier
+      'merchantIdentifier': merchantIdentifier,
+      'merchantName' : merchantName,
+      'isPending' : isPending
     };
     if (Platform.isIOS) {
       final dynamic stripeToken = await _channel.invokeMethod('getStripeToken', args);
